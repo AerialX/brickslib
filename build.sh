@@ -11,7 +11,7 @@ builddir="$TMPDIR"
 if [ -z "$builddir" ]; then
 	builddir="/tmp"
 fi
-builddir="$builddir/bricklibs"
+builddir="$builddir/brickslib"
 
 apiver="8"
 

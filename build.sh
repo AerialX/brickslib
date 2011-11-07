@@ -41,8 +41,47 @@ else
 	bindirsim="/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/bin"
 fi
 
-#arguments: url, dirname, outdir, extractcommand
+#arguments: libname, outdir
+function universalpackage() {
 
+pushd "$2"
+
+OUT_ARCH="ios-universal"
+MERGE_ARCH="ios-armv6 ios-armv7 ios-i386"
+mkdir -p "$OUT_ARCH/lib"
+MERGE_LIBS=""
+for arch in $MERGE_ARCH; do
+	if [ -e "$arch/lib/$1" ]; then
+		MERGE_LIBS="$MERGE_LIBS $arch/lib/$1"
+	fi
+done
+
+lipo -create -output $OUT_ARCH/lib/$1 $MERGE_LIBS
+
+popd
+
+}
+
+function universalheaders() {
+
+pushd "$1"
+
+OUT_ARCH="ios-universal"
+SIM_ARCH="ios-i386"
+SIM_PATH="iPhoneSimulator.platform"
+ARM_ARCH="ios-armv7"
+ARM_PATH="iPhoneOS.platform"
+SDK_PATH="Developer/Platforms"
+mkdir -p "$OUT_ARCH/$SDK_PATH/$SIM_PATH"
+cp -r "$SIM_ARCH/include" "$OUT_ARCH/$SDK_PATH/$SIM_PATH/"
+mkdir -p "$OUT_ARCH/$SDK_PATH/$ARM_PATH"
+cp -r "$ARM_ARCH/include" "$OUT_ARCH/$SDK_PATH/$ARM_PATH/"
+
+popd
+
+}
+
+#arguments: url, dirname, outdir, extractcommand
 function compilepackage() {
 
 CFLAGS_i386="-isysroot $sdkrootsim"
@@ -130,9 +169,15 @@ popd
 pngver=1.5.4
 freetypever=2.4.6
 zipver=0.10
+eigenver=3.0.2
 
 compilepackage "http://sourceforge.net/projects/libpng/files/libpng15/$pngver/libpng-$pngver.tar.gz/download" libpng-$pngver "$outdir" "tar -xz"
+universalpackage libpng.a "$outdir"
 compilepackage "http://sourceforge.net/projects/freetype/files/freetype2/$freetypever/freetype-$freetypever.tar.bz2/download" freetype-$freetypever "$outdir" "tar -xj"
+universalpackage libfreetype.a "$outdir"
 compilepackage "http://www.nih.at/libzip/libzip-$zipver.tar.bz2" libzip-$zipver "$outdir" "tar -xj"
+universalpackage libzip.a "$outdir"
+
+universalheaders "$outdir"
 
 rm -rf "$builddir"
